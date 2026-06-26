@@ -1,16 +1,24 @@
 "use client"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { LogOut, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { LanguageSwitcher } from "@/components/ui/language-switcher"
 import type { JwtPayload } from "@/types/auth"
 
-export default function AdminTopbar({ user }: { user: JwtPayload }) {
+interface Props {
+  user: JwtPayload
+  locale: string
+}
+
+export default function AdminTopbar({ user, locale }: Props) {
   const router = useRouter()
+  const t = useTranslations("auth")
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" })
-    toast.success("Signed out")
+    toast.success(t("signedOut"))
     router.push("/admin/login")
     router.refresh()
   }
@@ -19,6 +27,7 @@ export default function AdminTopbar({ user }: { user: JwtPayload }) {
     <header className="h-14 border-b border-slate-800 bg-slate-950 flex items-center justify-between px-6 flex-shrink-0">
       <div />
       <div className="flex items-center gap-3">
+        <LanguageSwitcher current={locale} variant="dark" />
         <div className="flex items-center gap-2 text-sm text-slate-400">
           <User className="h-4 w-4" />
           <span>{user.fullName ?? user.email}</span>

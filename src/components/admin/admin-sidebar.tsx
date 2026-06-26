@@ -1,20 +1,23 @@
 "use client"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { LayoutDashboard, Building2, CreditCard, ListOrdered, Users, Settings, ShieldCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const NAV = [
-  { href: "/admin/dashboard",      label: "Dashboard",     icon: LayoutDashboard },
-  { href: "/admin/companies",      label: "Companies",     icon: Building2 },
-  { href: "/admin/plans",          label: "Plans",         icon: CreditCard },
-  { href: "/admin/subscriptions",  label: "Subscriptions", icon: ListOrdered },
-  { href: "/admin/users",          label: "Admin Users",   icon: Users },
-  { href: "/admin/settings",       label: "Settings",      icon: Settings },
-]
+const NAV_KEYS = [
+  { href: "/admin/dashboard",     key: "dashboard",     icon: LayoutDashboard },
+  { href: "/admin/companies",     key: "companies",     icon: Building2 },
+  { href: "/admin/plans",         key: "plans",         icon: CreditCard },
+  { href: "/admin/subscriptions", key: "subscriptions", icon: ListOrdered },
+  { href: "/admin/users",         key: "adminUsers",    icon: Users },
+  { href: "/admin/settings",      key: "settings",      icon: Settings },
+] as const
 
 export default function AdminSidebar() {
   const path = usePathname()
+  const t = useTranslations("nav")
+  const b = useTranslations("brand")
 
   return (
     <aside className="w-60 flex-shrink-0 bg-slate-950 border-r border-slate-800 flex flex-col">
@@ -23,13 +26,13 @@ export default function AdminSidebar() {
           <ShieldCheck className="h-4 w-4 text-white" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-white">MediShip</p>
-          <p className="text-xs text-slate-400">Admin Panel</p>
+          <p className="text-sm font-semibold text-white">{b("name")}</p>
+          <p className="text-xs text-slate-400">{b("adminPanel")}</p>
         </div>
       </div>
 
       <nav className="flex-1 p-3 space-y-0.5">
-        {NAV.map(({ href, label, icon: Icon }) => (
+        {NAV_KEYS.map(({ href, key, icon: Icon }) => (
           <Link
             key={href}
             href={href}
@@ -41,7 +44,7 @@ export default function AdminSidebar() {
             )}
           >
             <Icon className="h-4 w-4 flex-shrink-0" />
-            {label}
+            {t(key)}
           </Link>
         ))}
       </nav>
