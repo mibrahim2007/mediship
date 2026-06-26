@@ -6,12 +6,12 @@ export const companySchema = z.object({
   phone: z.string().optional(),
   address: z.string().optional(),
   tax_reg_no: z.string().optional(),
-  currency: z.string().default("PKR"),
+  currency: z.string().min(1, "Currency is required"),
 })
 
 export const onboardCompanySchema = companySchema.extend({
   plan_id: z.string().uuid("Select a valid plan"),
-  billing_cycle: z.enum(["monthly", "yearly"]).default("monthly"),
+  billing_cycle: z.enum(["monthly", "yearly"]),
   admin_username: z.string().min(3, "Username must be at least 3 characters"),
   admin_email: z.string().email("Invalid email"),
   admin_password: z.string().min(8, "Password must be at least 8 characters"),
