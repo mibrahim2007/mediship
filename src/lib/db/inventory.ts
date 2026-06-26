@@ -154,7 +154,7 @@ export async function getWarehouses(companyId: string) {
 
 export async function getOrCreateDefaultLocation(companyId: string): Promise<string> {
   // Ensure a warehouse exists
-  let { data: warehouses } = await supabaseAdmin
+  const { data: warehouses } = await supabaseAdmin
     .from("warehouses")
     .select("id")
     .eq("company_id", companyId)
@@ -175,7 +175,7 @@ export async function getOrCreateDefaultLocation(companyId: string): Promise<str
   }
 
   // Ensure a stock location exists for that warehouse
-  let { data: locations } = await supabaseAdmin
+  const { data: locations } = await supabaseAdmin
     .from("stock_locations")
     .select("id")
     .eq("warehouse_id", warehouseId)

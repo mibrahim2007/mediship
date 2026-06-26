@@ -34,7 +34,7 @@ const sel = cn(
 
 const PAYMENT_TERMS = ["Immediate", "Net 15", "Net 30", "Net 60", "Net 90"]
 
-function calcLine(qty: number, price: number, disc: number, tax: number) {
+function calcLine(qty: number, price: number, disc: number, _tax: number) {
   const base = qty * price * (1 - disc / 100)
   return base
 }
