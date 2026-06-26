@@ -13,37 +13,49 @@ export async function onboardCompanyAction(input: OnboardCompanyInput) {
   await requirePlatformSession()
   const data = onboardCompanySchema.parse(input)
 
-  const company = await createCompany({
-    name: data.name,
-    email: data.email || undefined,
-    phone: data.phone,
-    address: data.address,
-    tax_reg_no: data.tax_reg_no,
-    currency: data.currency,
-  })
+  let company: Awaited<ReturnType<typeof createCompany>>
+  try {
+    company = await createCompany({
+      name: data.name,
+      email: data.email || undefined,
+      phone: data.phone,
+      address: data.address,
+      tax_reg_no: data.tax_reg_no,
+      currency: data.currency,
+    })
+  } catch (err: any) {
+    throw new Error(err?.message ?? "Failed to create company")
+  }
 
-  const [passwordHash, subscription] = await Promise.all([
-    hashPassword(data.admin_password),
-    createSubscription({
+  try {
+    const [passwordHash, subscription] = await Promise.all([
+      hashPassword(data.admin_password),
+      createSubscription({
+        company_id: company.id,
+        plan_id: data.plan_id,
+        billing_cycle: data.billing_cycle,
+        status: "trialing",
+        trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      }),
+    ])
+
+    await createUser({
       company_id: company.id,
-      plan_id: data.plan_id,
-      billing_cycle: data.billing_cycle,
-      status: "trialing",
-      trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-    }),
-  ])
+      username: data.admin_username,
+      email: data.admin_email,
+      password_hash: passwordHash,
+      full_name: data.admin_full_name,
+      role: "super_admin",
+    })
 
-  await createUser({
-    company_id: company.id,
-    username: data.admin_username,
-    email: data.admin_email,
-    password_hash: passwordHash,
-    full_name: data.admin_full_name,
-    role: "super_admin",
-  })
-
-  revalidatePath("/admin/companies")
-  return { company, subscription }
+    revalidatePath("/admin/companies")
+    return { company, subscription }
+  } catch (err: any) {
+    const msg: string = err?.message ?? ""
+    if (msg.includes("users_username_key")) throw new Error("Username already taken — choose a different one")
+    if (msg.includes("users_email_key")) throw new Error("Email already registered — use a different email")
+    throw new Error(msg || "Failed to create admin user")
+  }
 }
 
 export async function suspendCompanyAction(id: string) {
