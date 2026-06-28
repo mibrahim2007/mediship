@@ -5,11 +5,12 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { useEffect, useState } from "react"
-import { Check, ChevronDown, Plus, Search, Trash2, UserPlus } from "lucide-react"
+import { Check, ChevronDown, Plus, Search, Trash2, UserPlus, WifiOff } from "lucide-react"
 import { salesOrderSchema, type SalesOrderInput } from "@/lib/validations/sales"
 import { createSalesOrderAction, updateSalesOrderAction } from "@/lib/actions/sales"
 import { createContactAction } from "@/lib/actions/crm"
 import { createProductAction } from "@/lib/actions/inventory"
+import { offlineDb } from "@/lib/offline/db"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -49,6 +50,29 @@ const PAYMENT_TERMS_LIST = ["Immediate", "Net 15", "Net 30", "Net 60", "Net 90"]
 export function SalesOrderForm({ customers, warehouses, products, editId, defaultValues }: Props) {
   const router = useRouter()
   const today = new Date().toISOString().split("T")[0]
+
+  const [isOnline, setIsOnline] = useState(true)
+
+  // Cache data to IndexedDB for offline use, detect connectivity
+  useEffect(() => {
+    setIsOnline(navigator.onLine)
+    const up   = () => setIsOnline(true)
+    const down = () => setIsOnline(false)
+    window.addEventListener("online",  up)
+    window.addEventListener("offline", down)
+
+    // Cache reference data
+    if (navigator.onLine) {
+      offlineDb.cachedContacts.bulkPut(customers).catch(() => {})
+      offlineDb.cachedProducts.bulkPut(products).catch(() => {})
+      offlineDb.cachedWarehouses.bulkPut(warehouses).catch(() => {})
+    }
+
+    return () => {
+      window.removeEventListener("online",  up)
+      window.removeEventListener("offline", down)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // local customer list so newly created customers appear immediately
   const [customerList, setCustomerList] = useState<Customer[]>(customers)
@@ -175,6 +199,23 @@ export function SalesOrderForm({ customers, warehouses, products, editId, defaul
   }
 
   async function onSubmit(data: SalesOrderInput) {
+    // Offline: queue to IndexedDB
+    if (!navigator.onLine && !editId) {
+      try {
+        await offlineDb.pendingOrders.add({
+          tempId:    crypto.randomUUID(),
+          data:      data as unknown as Record<string, unknown>,
+          createdAt: new Date().toISOString(),
+          status:    "pending",
+        })
+        toast.success("Saved locally — will sync when back online", { duration: 5000 })
+        form.reset()
+      } catch {
+        toast.error("Failed to save locally")
+      }
+      return
+    }
+
     try {
       if (editId) {
         await updateSalesOrderAction(editId, data)
@@ -194,6 +235,16 @@ export function SalesOrderForm({ customers, warehouses, products, editId, defaul
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      {/* Offline banner */}
+      {!isOnline && (
+        <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-amber-800 text-sm">
+          <WifiOff className="h-4 w-4 flex-shrink-0" />
+          <span>
+            <strong>You are offline.</strong> Fill out the form and tap Save — the order will be stored locally and synced automatically when your connection is restored.
+          </span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-white rounded-xl border border-slate-200 p-6">
         <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-4">Order Details</h3>

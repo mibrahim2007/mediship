@@ -6,6 +6,7 @@ import { LogOut, User, Bell } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { LanguageSwitcher } from "@/components/ui/language-switcher"
 import type { JwtPayload } from "@/types/auth"
+import OfflineSyncWidget from "@/components/app/offline-sync-widget"
 
 interface Props {
   user: JwtPayload
@@ -25,7 +26,7 @@ export default function AppTopbar({ user, locale }: Props) {
 
   return (
     <header className="h-14 border-b border-slate-200 bg-white flex items-center justify-between px-6 flex-shrink-0">
-      <div />
+      <OfflineSyncWidget />
       <div className="flex items-center gap-2">
         <LanguageSwitcher current={locale} variant="light" />
         <Button variant="ghost" size="sm" className="text-slate-500">
