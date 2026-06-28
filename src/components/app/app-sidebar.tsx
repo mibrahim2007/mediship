@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
 import {
   LayoutDashboard, DollarSign, ShoppingCart, Package,
-  Warehouse, Settings, Activity, Users, BarChart2, ChevronRight, MapPin
+  Warehouse, Settings, Activity, Users, BarChart2, MapPin, SlidersHorizontal, Layers
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -23,9 +23,11 @@ export default function AppSidebar() {
   const t = useTranslations("nav")
   const b = useTranslations("brand")
 
-  const salesActive  = path.startsWith("/sales")
-  const teamsActive  = path.startsWith("/sales/teams")
-  const areasActive  = path.startsWith("/sales/areas")
+  const salesActive    = path.startsWith("/sales")
+  const teamsActive    = path.startsWith("/sales/teams")
+  const areasActive    = path.startsWith("/sales/areas")
+  const purchaseActive = path.startsWith("/purchase")
+  const stocksActive   = path.startsWith("/stocks")
 
   return (
     <aside className="w-56 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col">
@@ -44,9 +46,9 @@ export default function AppSidebar() {
               href={href}
               className={cn(
                 "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                path === href || (path.startsWith(href) && href !== "/sales")
+                path === href || (path.startsWith(href) && href !== "/sales" && href !== "/purchase" && href !== "/stocks")
                   ? "bg-teal-50 text-teal-700 border border-teal-100"
-                  : href === "/sales" && salesActive
+                  : (href === "/sales" && salesActive) || (href === "/purchase" && purchaseActive) || (href === "/stocks" && stocksActive)
                   ? "text-teal-600 hover:bg-slate-50"
                   : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
               )}
@@ -101,6 +103,62 @@ export default function AppSidebar() {
                   )}
                 >
                   <BarChart2 className="h-3.5 w-3.5" /> Comparison
+                </Link>
+              </div>
+            )}
+
+            {/* Purchase sub-links — always visible */}
+            {href === "/purchase" && (
+              <div className="ml-4 mt-0.5 space-y-0.5 border-l-2 border-slate-100 pl-3">
+                <Link
+                  href="/purchase"
+                  className={cn(
+                    "flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                    path === "/purchase" || (purchaseActive && path !== "/purchase/new")
+                      ? "text-teal-700 bg-teal-50"
+                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                  )}
+                >
+                  <Package className="h-3.5 w-3.5" /> Orders
+                </Link>
+                <Link
+                  href="/purchase/new"
+                  className={cn(
+                    "flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                    path === "/purchase/new"
+                      ? "text-teal-700 bg-teal-50"
+                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                  )}
+                >
+                  <Package className="h-3.5 w-3.5" /> New Order
+                </Link>
+              </div>
+            )}
+
+            {/* Stocks sub-links — always visible */}
+            {href === "/stocks" && (
+              <div className="ml-4 mt-0.5 space-y-0.5 border-l-2 border-slate-100 pl-3">
+                <Link
+                  href="/stocks"
+                  className={cn(
+                    "flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                    path === "/stocks" || (stocksActive && path !== "/stocks/adjust" && !path.startsWith("/stocks/products/new"))
+                      ? "text-teal-700 bg-teal-50"
+                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                  )}
+                >
+                  <Layers className="h-3.5 w-3.5" /> Products
+                </Link>
+                <Link
+                  href="/stocks/adjust"
+                  className={cn(
+                    "flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                    path === "/stocks/adjust"
+                      ? "text-teal-700 bg-teal-50"
+                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                  )}
+                >
+                  <SlidersHorizontal className="h-3.5 w-3.5" /> Adjust Stock
                 </Link>
               </div>
             )}
