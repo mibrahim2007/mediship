@@ -46,7 +46,7 @@ export default function AppSidebar() {
                 "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                 path === href || (path.startsWith(href) && href !== "/sales")
                   ? "bg-teal-50 text-teal-700 border border-teal-100"
-                  : href === "/sales" && salesActive && !teamsActive
+                  : href === "/sales" && salesActive && !teamsActive && !areasActive
                   ? "bg-teal-50 text-teal-700 border border-teal-100"
                   : href === "/sales" && salesActive
                   ? "text-teal-700 hover:bg-teal-50"
@@ -67,7 +67,7 @@ export default function AppSidebar() {
                   href="/sales"
                   className={cn(
                     "flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                    path === "/sales" || (path.startsWith("/sales/") && !path.startsWith("/sales/teams"))
+                    path === "/sales" || (path.startsWith("/sales/") && !path.startsWith("/sales/teams") && !path.startsWith("/sales/areas"))
                       ? "text-teal-700 bg-teal-50"
                       : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
                   )}
