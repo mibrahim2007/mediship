@@ -46,23 +46,29 @@ export default function AppSidebar() {
                 "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                 path === href || (path.startsWith(href) && href !== "/sales")
                   ? "bg-teal-50 text-teal-700 border border-teal-100"
-                  : href === "/sales" && salesActive && !teamsActive && !areasActive
-                  ? "bg-teal-50 text-teal-700 border border-teal-100"
                   : href === "/sales" && salesActive
-                  ? "text-teal-700 hover:bg-teal-50"
+                  ? "text-teal-600 hover:bg-slate-50"
                   : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
               )}
             >
               <Icon className="h-4 w-4 flex-shrink-0" />
               {t(key)}
-              {href === "/sales" && salesActive && (
-                <ChevronRight className="h-3 w-3 ml-auto text-slate-400" />
-              )}
             </Link>
 
             {/* Sales sub-links — always visible */}
             {href === "/sales" && (
               <div className="ml-4 mt-0.5 space-y-0.5 border-l-2 border-slate-100 pl-3">
+                <Link
+                  href="/sales"
+                  className={cn(
+                    "flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                    path === "/sales" || (path.startsWith("/sales/") && !teamsActive && !areasActive && path !== "/sales/teams/comparison")
+                      ? "text-teal-700 bg-teal-50"
+                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                  )}
+                >
+                  <ShoppingCart className="h-3.5 w-3.5" /> Orders
+                </Link>
                 <Link
                   href="/sales/teams"
                   className={cn(
