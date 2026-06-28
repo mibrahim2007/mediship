@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
 import {
   LayoutDashboard, DollarSign, ShoppingCart, Package,
-  Warehouse, Settings, Activity
+  Warehouse, Settings, Activity, Users, BarChart2, ChevronRight, MapPin
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -23,6 +23,10 @@ export default function AppSidebar() {
   const t = useTranslations("nav")
   const b = useTranslations("brand")
 
+  const salesActive  = path.startsWith("/sales")
+  const teamsActive  = path.startsWith("/sales/teams")
+  const areasActive  = path.startsWith("/sales/areas")
+
   return (
     <aside className="w-56 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col">
       <div className="flex items-center gap-2 p-4 border-b border-slate-100">
@@ -33,21 +37,79 @@ export default function AppSidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 p-2 space-y-0.5">
+      <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
         {NAV_KEYS.map(({ href, key, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className={cn(
-              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-              path.startsWith(href)
-                ? "bg-teal-50 text-teal-700 border border-teal-100"
-                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+          <div key={href}>
+            <Link
+              href={href}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                path === href || (path.startsWith(href) && href !== "/sales")
+                  ? "bg-teal-50 text-teal-700 border border-teal-100"
+                  : href === "/sales" && salesActive && !teamsActive
+                  ? "bg-teal-50 text-teal-700 border border-teal-100"
+                  : href === "/sales" && salesActive
+                  ? "text-teal-700 hover:bg-teal-50"
+                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+              )}
+            >
+              <Icon className="h-4 w-4 flex-shrink-0" />
+              {t(key)}
+              {href === "/sales" && salesActive && (
+                <ChevronRight className="h-3 w-3 ml-auto text-slate-400" />
+              )}
+            </Link>
+
+            {/* Sales sub-navigation */}
+            {href === "/sales" && salesActive && (
+              <div className="ml-4 mt-0.5 space-y-0.5 border-l-2 border-teal-100 pl-3">
+                <Link
+                  href="/sales"
+                  className={cn(
+                    "flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                    path === "/sales" || (path.startsWith("/sales/") && !path.startsWith("/sales/teams"))
+                      ? "text-teal-700 bg-teal-50"
+                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                  )}
+                >
+                  <ShoppingCart className="h-3.5 w-3.5" /> Orders
+                </Link>
+                <Link
+                  href="/sales/teams"
+                  className={cn(
+                    "flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                    teamsActive
+                      ? "text-teal-700 bg-teal-50"
+                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                  )}
+                >
+                  <Users className="h-3.5 w-3.5" /> Distribution Teams
+                </Link>
+                <Link
+                  href="/sales/areas"
+                  className={cn(
+                    "flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                    areasActive
+                      ? "text-teal-700 bg-teal-50"
+                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                  )}
+                >
+                  <MapPin className="h-3.5 w-3.5" /> Areas
+                </Link>
+                <Link
+                  href="/sales/teams/comparison"
+                  className={cn(
+                    "flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                    path === "/sales/teams/comparison"
+                      ? "text-teal-700 bg-teal-50"
+                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                  )}
+                >
+                  <BarChart2 className="h-3.5 w-3.5" /> Comparison
+                </Link>
+              </div>
             )}
-          >
-            <Icon className="h-4 w-4 flex-shrink-0" />
-            {t(key)}
-          </Link>
+          </div>
         ))}
       </nav>
     </aside>
