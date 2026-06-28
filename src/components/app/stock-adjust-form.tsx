@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { cn, formatCurrency } from "@/lib/utils"
-import { ArrowDownToLine, ArrowUpFromLine } from "lucide-react"
+import { ArrowDownToLine, ArrowUpFromLine, Plus } from "lucide-react"
 
 interface Product { id: string; name: string; internal_ref?: string; cost_price: number; uom: string }
 interface Props { products: Product[]; defaultProductId?: string }
@@ -90,7 +90,13 @@ export function StockAdjustForm({ products, defaultProductId }: Props) {
 
         {/* Product */}
         <div>
-          <Label className="text-slate-600 mb-1.5 block text-xs">Product <span className="text-red-500">*</span></Label>
+          <div className="flex items-center justify-between mb-1.5">
+            <Label className="text-slate-600 text-xs">Product <span className="text-red-500">*</span></Label>
+            <a href="/stocks/products/new" target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-700 font-medium transition-colors">
+              <Plus className="h-3 w-3" /> New Product
+            </a>
+          </div>
           <select
             className={sel}
             {...form.register("product_id")}

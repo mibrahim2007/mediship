@@ -108,8 +108,12 @@ export function JournalEntryForm({ accounts }: Props) {
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <div className="px-5 py-3 border-b border-slate-100 bg-slate-50">
+        <div className="px-5 py-3 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
           <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Journal Lines</h3>
+          <a href="/finance/accounts/new" target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-700 font-medium transition-colors">
+            <Plus className="h-3 w-3" /> New Account
+          </a>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

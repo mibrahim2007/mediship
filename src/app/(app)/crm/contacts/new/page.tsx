@@ -2,7 +2,16 @@ import { ContactForm } from "@/components/app/contact-form"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 
-export default function NewContactPage() {
+interface Props {
+  searchParams: Promise<{ type?: string }>
+}
+
+export default async function NewContactPage({ searchParams }: Props) {
+  const params = await searchParams
+  const type = (params.type === "vendor" || params.type === "customer" || params.type === "both")
+    ? params.type
+    : undefined
+
   return (
     <div className="max-w-2xl space-y-6">
       <div className="flex items-center gap-3">
@@ -11,10 +20,12 @@ export default function NewContactPage() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Add Contact</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Create a customer, vendor, or both</p>
+          <p className="text-slate-500 text-sm mt-0.5">
+            {type === "vendor" ? "Create a new vendor" : type === "customer" ? "Create a new customer" : "Create a customer, vendor, or both"}
+          </p>
         </div>
       </div>
-      <ContactForm />
+      <ContactForm defaultValues={type ? { type } : undefined} />
     </div>
   )
 }

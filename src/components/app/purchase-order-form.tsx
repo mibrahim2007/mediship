@@ -4,14 +4,19 @@ import { useForm, useFieldArray, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { useEffect } from "react"
-import { Plus, Trash2 } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Check, ChevronDown, Plus, Search, Trash2, UserPlus } from "lucide-react"
 import { purchaseOrderSchema, type PurchaseOrderInput } from "@/lib/validations/purchase"
 import { createPurchaseOrderAction, updatePurchaseOrderAction } from "@/lib/actions/purchase"
+import { createContactAction } from "@/lib/actions/crm"
+import { createProductAction } from "@/lib/actions/inventory"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { cn, formatCurrency } from "@/lib/utils"
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog"
 
 interface Vendor   { id: string; name: string; payment_terms?: string }
 interface Warehouse { id: string; name: string; code: string }
@@ -33,6 +38,7 @@ const sel = cn(
 )
 
 const PAYMENT_TERMS = ["Immediate", "Net 15", "Net 30", "Net 60", "Net 90"]
+const PAYMENT_TERMS_LIST = PAYMENT_TERMS
 
 function calcLine(qty: number, price: number) {
   return qty * price
@@ -41,6 +47,85 @@ function calcLine(qty: number, price: number) {
 export function PurchaseOrderForm({ vendors, warehouses, products, editId, defaultValues }: Props) {
   const router = useRouter()
   const today = new Date().toISOString().split("T")[0]
+
+  // local vendor list so newly created vendors appear immediately
+  const [vendorList, setVendorList] = useState<Vendor[]>(vendors)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [search, setSearch] = useState("")
+  const [createOpen, setCreateOpen] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [newVendor, setNewVendor] = useState({ name: "", company_name: "", email: "", phone: "", payment_terms: "" })
+
+  async function handleCreateVendor() {
+    if (!newVendor.name.trim()) return
+    setCreating(true)
+    try {
+      const contact = await createContactAction({
+        name: newVendor.name.trim(),
+        company_name: newVendor.company_name || undefined,
+        email: newVendor.email || "",
+        phone: newVendor.phone || undefined,
+        payment_terms: newVendor.payment_terms || undefined,
+        type: "vendor",
+        country: "Pakistan",
+        credit_limit: 0,
+      })
+      const created: Vendor = { id: contact.id, name: contact.name, payment_terms: contact.payment_terms ?? undefined }
+      setVendorList(prev => [...prev, created])
+      form.setValue("vendor_id", contact.id)
+      if (contact.payment_terms) form.setValue("payment_terms", contact.payment_terms)
+      setCreateOpen(false)
+      setNewVendor({ name: "", company_name: "", email: "", phone: "", payment_terms: "" })
+      toast.success(`${contact.name} added as vendor`)
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to create vendor")
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  // product picker state
+  const [productList, setProductList] = useState<Product[]>(products)
+  const [pickerLine, setPickerLine] = useState<number | null>(null)
+  const [productSearch, setProductSearch] = useState("")
+  const [pendingLine, setPendingLine] = useState<number | null>(null)
+  const [productCreateOpen, setProductCreateOpen] = useState(false)
+  const [productCreating, setProductCreating] = useState(false)
+  const [newProduct, setNewProduct] = useState({ name: "", internal_ref: "", uom: "pcs", sales_price: "0", cost_price: "0", tax_rate: "0" })
+
+  async function handleCreateProduct() {
+    if (!newProduct.name.trim() || !newProduct.uom.trim()) return
+    setProductCreating(true)
+    try {
+      const p = await createProductAction({
+        name: newProduct.name.trim(),
+        internal_ref: newProduct.internal_ref || undefined,
+        uom: newProduct.uom.trim(),
+        sales_price: Number(newProduct.sales_price) || 0,
+        cost_price: Number(newProduct.cost_price) || 0,
+        tax_rate: Number(newProduct.tax_rate) || 0,
+        reorder_point: 0,
+        reorder_qty: 0,
+      })
+      const created: Product = { id: p.id, name: p.name, uom: p.uom, cost_price: p.cost_price, tax_rate: p.tax_rate, internal_ref: p.internal_ref ?? undefined }
+      setProductList(prev => [...prev, created])
+      if (pendingLine !== null) {
+        form.setValue(`lines.${pendingLine}.product_id`, p.id)
+        form.setValue(`lines.${pendingLine}.unit_price`, p.cost_price)
+        form.setValue(`lines.${pendingLine}.uom`, p.uom)
+        form.setValue(`lines.${pendingLine}.tax_rate`, Number(p.tax_rate))
+        form.setValue(`lines.${pendingLine}.description`, p.name)
+        setPendingLine(null)
+      }
+      setProductCreateOpen(false)
+      setNewProduct({ name: "", internal_ref: "", uom: "pcs", sales_price: "0", cost_price: "0", tax_rate: "0" })
+      toast.success(`${p.name} created`)
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to create product")
+    } finally {
+      setProductCreating(false)
+    }
+  }
 
   const form = useForm<PurchaseOrderInput>({
     resolver: zodResolver(purchaseOrderSchema),
@@ -72,8 +157,9 @@ export function PurchaseOrderForm({ vendors, warehouses, products, editId, defau
   const total = subtotal + taxAmount
 
   function onProductChange(index: number, productId: string) {
-    const p = products.find((x) => x.id === productId)
+    const p = productList.find((x) => x.id === productId)
     if (!p) return
+    form.setValue(`lines.${index}.product_id`, productId)
     form.setValue(`lines.${index}.unit_price`, p.cost_price)
     form.setValue(`lines.${index}.uom`, p.uom)
     form.setValue(`lines.${index}.tax_rate`, Number(p.tax_rate))
@@ -81,7 +167,7 @@ export function PurchaseOrderForm({ vendors, warehouses, products, editId, defau
   }
 
   function onVendorChange(vendorId: string) {
-    const v = vendors.find((x) => x.id === vendorId)
+    const v = vendorList.find((x) => x.id === vendorId)
     if (v?.payment_terms) form.setValue("payment_terms", v.payment_terms)
   }
 
@@ -111,14 +197,21 @@ export function PurchaseOrderForm({ vendors, warehouses, products, editId, defau
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
           <div>
             <Label className="text-slate-600 mb-1.5 block text-xs">Vendor</Label>
-            <select
-              className={sel}
-              {...form.register("vendor_id")}
-              onChange={(e) => { form.setValue("vendor_id", e.target.value); onVendorChange(e.target.value) }}
+            <input type="hidden" {...form.register("vendor_id")} />
+            <button
+              type="button"
+              onClick={() => setPickerOpen(true)}
+              className={cn(
+                sel,
+                "text-left flex items-center justify-between gap-2 cursor-pointer",
+                !form.watch("vendor_id") && "text-slate-400"
+              )}
             >
-              <option value="">— No vendor —</option>
-              {vendors.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
-            </select>
+              <span className="truncate">
+                {vendorList.find(v => v.id === form.watch("vendor_id"))?.name ?? "— No vendor —"}
+              </span>
+              <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
+            </button>
           </div>
 
           <div>
@@ -192,15 +285,22 @@ export function PurchaseOrderForm({ vendors, warehouses, products, editId, defau
               {fields.map((field, i) => (
                 <tr key={field.id} className="border-b border-slate-50">
                   <td className="px-2 py-2">
-                    <select
-                      className={cn(sel, "text-xs")}
-                      onChange={(e) => onProductChange(i, e.target.value)}
+                    <input type="hidden" {...form.register(`lines.${i}.product_id`)} />
+                    <button
+                      type="button"
+                      onClick={() => { setPickerLine(i); setProductSearch("") }}
+                      className={cn(
+                        sel, "h-8 text-xs text-left flex items-center justify-between gap-1 cursor-pointer",
+                        !lines[i]?.product_id && "text-slate-400"
+                      )}
                     >
-                      <option value="">Select...</option>
-                      {products.map((p) => (
-                        <option key={p.id} value={p.id}>{p.internal_ref ? `[${p.internal_ref}] ` : ""}{p.name}</option>
-                      ))}
-                    </select>
+                      <span className="truncate">
+                        {productList.find(p => p.id === lines[i]?.product_id)
+                          ? `${productList.find(p => p.id === lines[i]?.product_id)?.internal_ref ? `[${productList.find(p => p.id === lines[i]?.product_id)?.internal_ref}] ` : ""}${productList.find(p => p.id === lines[i]?.product_id)?.name}`
+                          : "Select product..."}
+                      </span>
+                      <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                    </button>
                   </td>
                   <td className="px-2 py-2">
                     <Input className="border-slate-200 h-8 text-xs" placeholder="Description" {...form.register(`lines.${i}.description`)} />
@@ -273,6 +373,299 @@ export function PurchaseOrderForm({ vendors, warehouses, products, editId, defau
           {isSubmitting ? "Saving..." : editId ? "Update PO" : "Save PO"}
         </Button>
       </div>
+
+      {/* ── Product picker dialog (per line) ── */}
+      <Dialog open={pickerLine !== null} onOpenChange={(open) => { if (!open) { setPickerLine(null); setProductSearch("") } }}>
+        <DialogContent className="sm:max-w-lg gap-0 p-0 overflow-hidden" showCloseButton={false}>
+          <DialogHeader className="px-4 pt-4 pb-3 border-b border-slate-100">
+            <DialogTitle className="text-base">Select Product</DialogTitle>
+            <div className="relative mt-2">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+              <Input
+                autoFocus
+                placeholder="Search by name or SKU..."
+                value={productSearch}
+                onChange={e => setProductSearch(e.target.value)}
+                className="pl-8 border-slate-200 h-8 text-sm"
+              />
+            </div>
+          </DialogHeader>
+
+          <div className="max-h-72 overflow-y-auto">
+            {productList
+              .filter(p =>
+                p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+                (p.internal_ref ?? "").toLowerCase().includes(productSearch.toLowerCase())
+              )
+              .map(p => {
+                const isSelected = pickerLine !== null && lines[pickerLine]?.product_id === p.id
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => {
+                      if (pickerLine !== null) onProductChange(pickerLine, p.id)
+                      setPickerLine(null)
+                      setProductSearch("")
+                    }}
+                    className={cn(
+                      "w-full px-4 py-2.5 text-sm text-left flex items-center justify-between gap-3 hover:bg-slate-50 transition-colors",
+                      isSelected && "bg-teal-50 text-teal-700"
+                    )}
+                  >
+                    <div className="min-w-0">
+                      <span className="truncate font-medium">{p.name}</span>
+                      {p.internal_ref && <span className={cn("ml-1.5 text-xs", isSelected ? "text-teal-500" : "text-slate-400")}>[{p.internal_ref}]</span>}
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0 text-xs">
+                      <span className={isSelected ? "text-teal-500" : "text-slate-400"}>{p.uom}</span>
+                      <span className={cn("font-medium", isSelected ? "text-teal-700" : "text-slate-600")}>{p.cost_price.toLocaleString()}</span>
+                      {isSelected && <Check className="h-3.5 w-3.5" />}
+                    </div>
+                  </button>
+                )
+              })
+            }
+            {productList.filter(p =>
+              p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+              (p.internal_ref ?? "").toLowerCase().includes(productSearch.toLowerCase())
+            ).length === 0 && (
+              <p className="px-4 py-8 text-sm text-slate-400 text-center">No products found</p>
+            )}
+          </div>
+
+          <div className="px-4 py-3 border-t border-slate-100 bg-slate-50/60 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => { setPendingLine(pickerLine); setPickerLine(null); setProductSearch(""); setProductCreateOpen(true) }}
+              className="flex items-center gap-1.5 text-sm font-medium text-teal-600 hover:text-teal-700 transition-colors"
+            >
+              <Plus className="h-3.5 w-3.5" /> New Product
+            </button>
+            <button
+              type="button"
+              onClick={() => { setPickerLine(null); setProductSearch("") }}
+              className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Quick-create product dialog ── */}
+      <Dialog open={productCreateOpen} onOpenChange={(open) => setProductCreateOpen(open)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-4 w-4 text-teal-600" /> New Product
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-1">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="col-span-2">
+                <Label className="text-slate-600 mb-1.5 block text-xs">Product Name <span className="text-red-500">*</span></Label>
+                <Input className="border-slate-200" placeholder="e.g. Panadol 500mg" value={newProduct.name} onChange={e => setNewProduct(p => ({ ...p, name: e.target.value }))} autoFocus />
+              </div>
+              <div>
+                <Label className="text-slate-600 mb-1.5 block text-xs">SKU / Ref</Label>
+                <Input className="border-slate-200" placeholder="SKU-001" value={newProduct.internal_ref} onChange={e => setNewProduct(p => ({ ...p, internal_ref: e.target.value }))} />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label className="text-slate-600 mb-1.5 block text-xs">UoM <span className="text-red-500">*</span></Label>
+                <Input className="border-slate-200" placeholder="pcs" value={newProduct.uom} onChange={e => setNewProduct(p => ({ ...p, uom: e.target.value }))} />
+              </div>
+              <div>
+                <Label className="text-slate-600 mb-1.5 block text-xs">Cost Price</Label>
+                <Input type="number" min="0" step="0.01" className="border-slate-200" value={newProduct.cost_price} onChange={e => setNewProduct(p => ({ ...p, cost_price: e.target.value }))} />
+              </div>
+              <div>
+                <Label className="text-slate-600 mb-1.5 block text-xs">Tax %</Label>
+                <Input type="number" min="0" max="100" step="0.01" className="border-slate-200" value={newProduct.tax_rate} onChange={e => setNewProduct(p => ({ ...p, tax_rate: e.target.value }))} />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => { setProductCreateOpen(false); setPendingLine(null); setNewProduct({ name: "", internal_ref: "", uom: "pcs", sales_price: "0", cost_price: "0", tax_rate: "0" }) }}>Cancel</Button>
+            <Button type="button" disabled={productCreating || !newProduct.name.trim() || !newProduct.uom.trim()} onClick={handleCreateProduct} className="bg-teal-600 hover:bg-teal-700">
+              {productCreating ? "Creating..." : "Create & Select"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Vendor picker dialog (LOV) ── */}
+      <Dialog open={pickerOpen} onOpenChange={(open) => { setPickerOpen(open); if (!open) setSearch("") }}>
+        <DialogContent className="sm:max-w-md gap-0 p-0 overflow-hidden" showCloseButton={false}>
+          <DialogHeader className="px-4 pt-4 pb-3 border-b border-slate-100">
+            <DialogTitle className="text-base">Select Vendor</DialogTitle>
+            <div className="relative mt-2">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+              <Input
+                autoFocus
+                placeholder="Search vendors..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="pl-8 border-slate-200 h-8 text-sm"
+              />
+            </div>
+          </DialogHeader>
+
+          <div className="max-h-64 overflow-y-auto">
+            {/* No vendor option */}
+            <button
+              type="button"
+              onClick={() => { form.setValue("vendor_id", ""); setPickerOpen(false); setSearch("") }}
+              className={cn(
+                "w-full px-4 py-2.5 text-sm text-left flex items-center justify-between gap-2 hover:bg-slate-50 transition-colors border-b border-slate-50",
+                !form.watch("vendor_id") ? "bg-teal-50 text-teal-700" : "text-slate-400 italic"
+              )}
+            >
+              <span>No vendor</span>
+              {!form.watch("vendor_id") && <Check className="h-3.5 w-3.5 shrink-0" />}
+            </button>
+
+            {vendorList
+              .filter(v => v.name.toLowerCase().includes(search.toLowerCase()))
+              .map(v => {
+                const isSelected = form.watch("vendor_id") === v.id
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => {
+                      form.setValue("vendor_id", v.id)
+                      onVendorChange(v.id)
+                      setPickerOpen(false)
+                      setSearch("")
+                    }}
+                    className={cn(
+                      "w-full px-4 py-2.5 text-sm text-left flex items-center justify-between gap-2 hover:bg-slate-50 transition-colors",
+                      isSelected && "bg-teal-50 text-teal-700"
+                    )}
+                  >
+                    <span className="truncate">{v.name}</span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {v.payment_terms && (
+                        <span className={cn("text-xs", isSelected ? "text-teal-500" : "text-slate-400")}>
+                          {v.payment_terms}
+                        </span>
+                      )}
+                      {isSelected && <Check className="h-3.5 w-3.5" />}
+                    </div>
+                  </button>
+                )
+              })
+            }
+
+            {vendorList.filter(v => v.name.toLowerCase().includes(search.toLowerCase())).length === 0 && (
+              <p className="px-4 py-8 text-sm text-slate-400 text-center">No vendors found</p>
+            )}
+          </div>
+
+          <div className="px-4 py-3 border-t border-slate-100 bg-slate-50/60 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => { setPickerOpen(false); setSearch(""); setCreateOpen(true) }}
+              className="flex items-center gap-1.5 text-sm font-medium text-teal-600 hover:text-teal-700 transition-colors"
+            >
+              <UserPlus className="h-3.5 w-3.5" /> New Vendor
+            </button>
+            <button
+              type="button"
+              onClick={() => { setPickerOpen(false); setSearch("") }}
+              className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Quick-create vendor dialog ── */}
+      <Dialog open={createOpen} onOpenChange={(open) => setCreateOpen(open)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="h-4 w-4 text-teal-600" /> New Vendor
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3 py-1">
+            <div>
+              <Label className="text-slate-600 mb-1.5 block text-xs">Full Name <span className="text-red-500">*</span></Label>
+              <Input
+                className="border-slate-200"
+                placeholder="Contact person name"
+                value={newVendor.name}
+                onChange={e => setNewVendor(p => ({ ...p, name: e.target.value }))}
+                autoFocus
+              />
+            </div>
+            <div>
+              <Label className="text-slate-600 mb-1.5 block text-xs">Company / Organization</Label>
+              <Input
+                className="border-slate-200"
+                placeholder="Company name"
+                value={newVendor.company_name}
+                onChange={e => setNewVendor(p => ({ ...p, company_name: e.target.value }))}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-slate-600 mb-1.5 block text-xs">Email</Label>
+                <Input
+                  type="email"
+                  className="border-slate-200"
+                  placeholder="email@example.com"
+                  value={newVendor.email}
+                  onChange={e => setNewVendor(p => ({ ...p, email: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-slate-600 mb-1.5 block text-xs">Phone</Label>
+                <Input
+                  className="border-slate-200"
+                  placeholder="+92 300 0000000"
+                  value={newVendor.phone}
+                  onChange={e => setNewVendor(p => ({ ...p, phone: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div>
+              <Label className="text-slate-600 mb-1.5 block text-xs">Payment Terms</Label>
+              <select
+                className={cn(sel)}
+                value={newVendor.payment_terms}
+                onChange={e => setNewVendor(p => ({ ...p, payment_terms: e.target.value }))}
+              >
+                <option value="">— Select terms —</option>
+                {PAYMENT_TERMS_LIST.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => { setCreateOpen(false); setNewVendor({ name: "", company_name: "", email: "", phone: "", payment_terms: "" }) }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={creating || !newVendor.name.trim()}
+              onClick={handleCreateVendor}
+              className="bg-teal-600 hover:bg-teal-700"
+            >
+              {creating ? "Creating..." : "Create & Select"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   )
 }

@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
+import { Plus } from "lucide-react"
 
 const sel = cn(
   "flex h-9 w-full rounded-lg border border-slate-200 bg-white px-3 py-1 text-sm",
@@ -113,7 +114,13 @@ export function LeadForm({ contacts, defaultValues, editId }: Props) {
         <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-4">Contact Info</h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <Label className="text-slate-600 mb-1.5 block text-xs">Link to Contact</Label>
+            <div className="flex items-center justify-between mb-1.5">
+              <Label className="text-slate-600 text-xs">Link to Contact</Label>
+              <a href="/crm/contacts/new" target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-700 font-medium transition-colors">
+                <Plus className="h-3 w-3" /> New Contact
+              </a>
+            </div>
             <select className={sel} {...form.register("contact_id")}>
               <option value="">— No linked contact —</option>
               {contacts.map((c) => (
