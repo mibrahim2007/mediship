@@ -5,12 +5,20 @@ import { Toaster } from "@/components/ui/sonner"
 import { NextIntlClientProvider } from "next-intl"
 import { getLocale, getMessages } from "next-intl/server"
 import { isRtl } from "@/i18n/request"
+import PwaRegister from "@/components/pwa-register"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "MediShip — Medical Supply & Distribution",
   description: "SaaS ERP for medical supply and distribution companies",
+  manifest: "/manifest.webmanifest",
+  themeColor: "#0d9488",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "MediShip",
+  },
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -24,6 +32,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {children}
           <Toaster richColors position="top-right" />
         </NextIntlClientProvider>
+        <PwaRegister />
       </body>
     </html>
   )
