@@ -212,12 +212,23 @@ export default function AppSidebar() {
                   href="/crm/contacts"
                   className={cn(
                     "flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                    path.startsWith("/crm/contacts")
+                      path === "/crm/contacts" || (path.startsWith("/crm/contacts") && path !== "/crm/contacts/new")
                       ? "text-teal-700 bg-teal-50"
                       : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
                   )}
                 >
                   <Contact2 className="h-3.5 w-3.5" /> Contacts
+                </Link>
+                <Link
+                  href="/crm/contacts/new"
+                  className={cn(
+                    "flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                    path === "/crm/contacts/new"
+                      ? "text-teal-700 bg-teal-50"
+                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                  )}
+                >
+                  <Contact2 className="h-3.5 w-3.5" /> New Contact
                 </Link>
                 <Link
                   href="/crm/leads/new"
