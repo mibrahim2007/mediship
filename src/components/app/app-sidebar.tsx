@@ -60,7 +60,24 @@ export default function AppSidebar() {
               )}
             </Link>
 
-            {/* Sales sub-navigation */}
+            {/* Areas — always visible under Sales */}
+            {href === "/sales" && (
+              <div className="ml-4 mt-0.5 border-l-2 border-slate-100 pl-3">
+                <Link
+                  href="/sales/areas"
+                  className={cn(
+                    "flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                    areasActive
+                      ? "text-teal-700 bg-teal-50"
+                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                  )}
+                >
+                  <MapPin className="h-3.5 w-3.5" /> Areas
+                </Link>
+              </div>
+            )}
+
+            {/* Sales sub-navigation — visible when Sales is active */}
             {href === "/sales" && salesActive && (
               <div className="ml-4 mt-0.5 space-y-0.5 border-l-2 border-teal-100 pl-3">
                 <Link
