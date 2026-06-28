@@ -67,12 +67,23 @@ export default function AppSidebar() {
                   href="/sales"
                   className={cn(
                     "flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                    path === "/sales" || (path.startsWith("/sales/") && !teamsActive && !areasActive && path !== "/sales/teams/comparison")
+                    path === "/sales" || (path.startsWith("/sales/") && !teamsActive && !areasActive && path !== "/sales/teams/comparison" && path !== "/sales/new")
                       ? "text-teal-700 bg-teal-50"
                       : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
                   )}
                 >
                   <ShoppingCart className="h-3.5 w-3.5" /> Orders
+                </Link>
+                <Link
+                  href="/sales/new"
+                  className={cn(
+                    "flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                    path === "/sales/new"
+                      ? "text-teal-700 bg-teal-50"
+                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                  )}
+                >
+                  <ShoppingCart className="h-3.5 w-3.5" /> New Order
                 </Link>
                 <Link
                   href="/sales/teams"
