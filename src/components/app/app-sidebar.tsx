@@ -60,9 +60,20 @@ export default function AppSidebar() {
               )}
             </Link>
 
-            {/* Areas — always visible under Sales */}
+            {/* Teams & Areas — always visible under Sales */}
             {href === "/sales" && (
-              <div className="ml-4 mt-0.5 border-l-2 border-slate-100 pl-3">
+              <div className="ml-4 mt-0.5 space-y-0.5 border-l-2 border-slate-100 pl-3">
+                <Link
+                  href="/sales/teams"
+                  className={cn(
+                    "flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                    teamsActive
+                      ? "text-teal-700 bg-teal-50"
+                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                  )}
+                >
+                  <Users className="h-3.5 w-3.5" /> Distribution Teams
+                </Link>
                 <Link
                   href="/sales/areas"
                   className={cn(
