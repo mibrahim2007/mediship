@@ -36,7 +36,7 @@ export default function AppSidebar() {
   const t = useTranslations("nav")
   const b = useTranslations("brand")
 
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(false)
   const [sections, setSections] = useState<Record<SectionKey, boolean>>({
     sales: true, purchase: true, stocks: true, finance: true, crm: true,
   })
