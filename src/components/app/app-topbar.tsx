@@ -1,4 +1,5 @@
 "use client"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
@@ -7,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { LanguageSwitcher } from "@/components/ui/language-switcher"
 import type { JwtPayload } from "@/types/auth"
 import OfflineSyncWidget from "@/components/app/offline-sync-widget"
+import { storeOfflineSession, clearOfflineSession } from "@/lib/offline/session"
 
 interface Props {
   user: JwtPayload
@@ -17,8 +19,15 @@ export default function AppTopbar({ user, locale }: Props) {
   const router = useRouter()
   const t = useTranslations("auth")
 
+  // Refresh offline session on every authenticated page load so mobile users
+  // who are already logged in (didn't go through the login form) still get it
+  useEffect(() => {
+    storeOfflineSession({ name: user.fullName ?? user.email ?? "", role: user.role ?? "" })
+  }, [user.fullName, user.email, user.role])
+
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" })
+    clearOfflineSession()
     toast.success(t("signedOut"))
     router.push("/login")
     router.refresh()

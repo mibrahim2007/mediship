@@ -7,7 +7,7 @@ import {
   LayoutDashboard, DollarSign, ShoppingCart, Package,
   Warehouse, Settings, Activity, Users, BarChart2, MapPin,
   SlidersHorizontal, Layers, CreditCard, BookOpen, Contact2,
-  TrendingUp, ChevronDown, PanelLeftClose, PanelLeftOpen,
+  TrendingUp, ChevronDown, PanelLeftClose, PanelLeftOpen, Smartphone,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -170,6 +170,23 @@ export default function AppSidebar() {
           )
         })}
       </nav>
+
+      {/* Mobile App link */}
+      <div className="px-2 pb-1 border-t border-slate-100 pt-2">
+        <a
+          href="https://mediship-pwa.vercel.app"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(
+            "flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+            "text-teal-600 bg-teal-50 hover:bg-teal-100 border border-teal-100"
+          )}
+          title="Open MediShip Mobile App"
+        >
+          <Smartphone className="h-4 w-4 flex-shrink-0" />
+          {open && <span className="truncate">Mobile App</span>}
+        </a>
+      </div>
 
       {/* Sidebar collapse toggle */}
       <div className="p-2 border-t border-slate-100">

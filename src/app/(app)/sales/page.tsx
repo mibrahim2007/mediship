@@ -3,25 +3,9 @@ import { getSalesOrders } from "@/lib/db/sales"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import Link from "next/link"
-import { formatCurrency, formatDate } from "@/lib/utils"
+import SalesOrdersList from "@/components/app/sales-orders-list"
 
 export const dynamic = "force-dynamic"
-
-const STATUS_STYLE: Record<string, string> = {
-  quotation:   "bg-slate-100 text-slate-600",
-  sales_order: "bg-teal-100 text-teal-700",
-  to_invoice:  "bg-amber-100 text-amber-700",
-  invoiced:    "bg-green-100 text-green-700",
-  cancelled:   "bg-red-100 text-red-600",
-}
-
-const STATUS_LABEL: Record<string, string> = {
-  quotation:   "Quotation",
-  sales_order: "Sales Order",
-  to_invoice:  "To Invoice",
-  invoiced:    "Invoiced",
-  cancelled:   "Cancelled",
-}
 
 export default async function SalesPage() {
   const session = await requireTenantSession()
@@ -41,46 +25,7 @@ export default async function SalesPage() {
         </Link>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-100 bg-slate-50">
-              <th className="text-left px-5 py-3 text-slate-500 font-medium">Order #</th>
-              <th className="text-left px-5 py-3 text-slate-500 font-medium">Customer</th>
-              <th className="text-left px-5 py-3 text-slate-500 font-medium">Date</th>
-              <th className="text-left px-5 py-3 text-slate-500 font-medium">Status</th>
-              <th className="text-right px-5 py-3 text-slate-500 font-medium">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((o: any) => (
-              <tr key={o.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                <td className="px-5 py-3">
-                  <Link href={`/sales/${o.id}`} className="font-mono text-xs text-teal-700 hover:underline font-medium">
-                    {o.order_no}
-                  </Link>
-                </td>
-                <td className="px-5 py-3 text-slate-700">{o.contacts?.name ?? <span className="text-slate-400">—</span>}</td>
-                <td className="px-5 py-3 text-slate-500">{formatDate(o.order_date)}</td>
-                <td className="px-5 py-3">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLE[o.status] ?? "bg-slate-100 text-slate-600"}`}>
-                    {STATUS_LABEL[o.status] ?? o.status}
-                  </span>
-                </td>
-                <td className="px-5 py-3 text-right font-medium text-slate-900">{formatCurrency(o.total ?? 0)}</td>
-              </tr>
-            ))}
-            {orders.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-5 py-16 text-center text-slate-400">
-                  <p className="text-base mb-1">No sales orders yet</p>
-                  <p className="text-xs">Create your first order to get started</p>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <SalesOrdersList initialOrders={orders as any} />
     </div>
   )
 }

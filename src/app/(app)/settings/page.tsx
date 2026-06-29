@@ -4,6 +4,7 @@ import { getSubscriptionByCompany } from "@/lib/db/subscriptions"
 import { getUsersByCompany } from "@/lib/db/users"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatDate } from "@/lib/utils"
+import { Smartphone, ExternalLink, QrCode } from "lucide-react"
 
 export const dynamic = "force-dynamic"
 
@@ -68,6 +69,46 @@ export default async function SettingsPage() {
                   <span className="text-xs px-2 py-0.5 bg-slate-100 rounded capitalize">{u.role?.replace("_", " ")}</span>
                 </div>
               ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Mobile App card — spans full width */}
+        <Card className="border-teal-100 bg-gradient-to-br from-teal-50 to-white lg:col-span-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Smartphone className="h-4 w-4 text-teal-600" />
+              MediShip Mobile App
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row gap-6 items-start">
+              <div className="flex-1 space-y-3">
+                <p className="text-sm text-slate-600">
+                  Access MediShip from your Android phone — book orders, manage leads, check stock, and create purchase orders on the go.
+                </p>
+                <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono text-teal-700">
+                  https://mediship-pwa.vercel.app
+                  <a href="https://mediship-pwa.vercel.app" target="_blank" rel="noopener noreferrer" className="ml-auto text-slate-400 hover:text-teal-600">
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                </div>
+                <div className="space-y-1.5 text-xs text-slate-500">
+                  <p className="font-medium text-slate-600">How to install on Android:</p>
+                  <ol className="list-decimal list-inside space-y-1">
+                    <li>Open the URL above in <strong>Chrome</strong> on your Android phone</li>
+                    <li>Tap the <strong>⋮ menu → "Add to Home Screen"</strong></li>
+                    <li>Tap <strong>Add</strong> — the MediShip icon appears on your home screen</li>
+                    <li>Open it like a native app — works offline too</li>
+                  </ol>
+                </div>
+              </div>
+              <div className="flex flex-col items-center gap-2 flex-shrink-0">
+                <div className="w-28 h-28 bg-white border-2 border-teal-100 rounded-2xl flex items-center justify-center">
+                  <QrCode className="h-20 w-20 text-slate-300" />
+                </div>
+                <p className="text-[10px] text-slate-400 text-center">Scan with phone camera<br />to open the app</p>
+              </div>
             </div>
           </CardContent>
         </Card>

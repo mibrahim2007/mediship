@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "@/components/ui/sonner"
@@ -9,11 +9,14 @@ import PwaRegister from "@/components/pwa-register"
 
 const inter = Inter({ subsets: ["latin"] })
 
+export const viewport: Viewport = {
+  themeColor: "#0d9488",
+}
+
 export const metadata: Metadata = {
   title: "MediShip — Medical Supply & Distribution",
   description: "SaaS ERP for medical supply and distribution companies",
   manifest: "/manifest.webmanifest",
-  themeColor: "#0d9488",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

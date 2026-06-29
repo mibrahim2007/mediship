@@ -30,11 +30,22 @@ export interface CachedWarehouse {
   code: string
 }
 
+export interface CachedOrder {
+  id: string
+  order_no: string
+  order_date: string
+  status: string
+  total: number
+  contact_name?: string
+  cachedAt: string
+}
+
 class MediShipOfflineDB extends Dexie {
   pendingOrders!: Table<PendingOrder>
   cachedContacts!: Table<CachedContact>
   cachedProducts!: Table<CachedProduct>
   cachedWarehouses!: Table<CachedWarehouse>
+  cachedOrders!: Table<CachedOrder>
 
   constructor() {
     super("mediship-offline-v1")
@@ -43,6 +54,13 @@ class MediShipOfflineDB extends Dexie {
       cachedContacts:  "id",
       cachedProducts:  "id",
       cachedWarehouses:"id",
+    })
+    this.version(2).stores({
+      pendingOrders:   "++id, tempId, status",
+      cachedContacts:  "id",
+      cachedProducts:  "id",
+      cachedWarehouses:"id",
+      cachedOrders:    "id, status",
     })
   }
 }

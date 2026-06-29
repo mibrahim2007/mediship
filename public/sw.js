@@ -1,13 +1,13 @@
-const CACHE = "mediship-shell-v2"
+const CACHE = "mediship-shell-v4"
 
-// Pages pre-cached so field reps can open them offline
-const PRECACHE = ["/sales/new", "/crm/leads/new", "/sales"]
+// offline.html is public (no auth) — always precached so offline always works
+const PRECACHE = ["/offline.html", "/login"]
 
 self.addEventListener("install", (e) => {
   e.waitUntil(
     caches.open(CACHE)
       .then((c) => c.addAll(PRECACHE))
-      .catch(() => {}) // don't block install if a page redirects to login
+      .catch(() => {}) // don't block SW install if precache fetch fails
       .then(() => self.skipWaiting())
   )
 })
@@ -22,7 +22,7 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return
-  if (!e.request.url.startsWith("http"))  return
+  if (!e.request.url.startsWith("http")) return
 
   const url = new URL(e.request.url)
 
@@ -40,7 +40,7 @@ self.addEventListener("fetch", (e) => {
     return
   }
 
-  // Network-first for everything else; fall back to cache when offline
+  // Network-first for everything else; fall back to cache, then offline.html for navigation
   e.respondWith(
     fetch(e.request)
       .then((res) => {
@@ -49,6 +49,27 @@ self.addEventListener("fetch", (e) => {
         }
         return res
       })
-      .catch(() => caches.match(e.request))
+      .catch(async () => {
+        const cached = await caches.match(e.request)
+        if (cached) return cached
+        // For page navigations with no cache, serve the offline shell
+        if (e.request.mode === "navigate") {
+          return caches.match("/offline.html")
+        }
+      })
   )
+})
+
+// Message from client: warm cache for protected pages after login
+self.addEventListener("message", (e) => {
+  if (e.data?.type === "CACHE_PAGES") {
+    const pages = e.data.pages || []
+    caches.open(CACHE).then((cache) => {
+      pages.forEach((url) => {
+        fetch(url, { credentials: "include" }).then((res) => {
+          if (res.ok) cache.put(url, res)
+        }).catch(() => {})
+      })
+    })
+  }
 })
