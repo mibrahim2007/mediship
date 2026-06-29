@@ -4,18 +4,22 @@ import { getSubscriptionByCompany } from "@/lib/db/subscriptions"
 import { getUsersByCompany } from "@/lib/db/users"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatDate } from "@/lib/utils"
-import { Smartphone, ExternalLink, QrCode } from "lucide-react"
+import { Smartphone, ExternalLink } from "lucide-react"
+import QRCode from "qrcode"
 
 export const dynamic = "force-dynamic"
+
+const PWA_URL = "https://mediship-pwa.vercel.app"
 
 export default async function SettingsPage() {
   const session = await requireTenantSession()
   const cid = session.companyId!
 
-  const [company, sub, users] = await Promise.all([
+  const [company, sub, users, qrDataUrl] = await Promise.all([
     getCompanyById(cid),
     getSubscriptionByCompany(cid),
     getUsersByCompany(cid),
+    QRCode.toDataURL(PWA_URL, { width: 200, margin: 1, color: { dark: "#0f172a", light: "#ffffff" } }),
   ])
 
   return (
@@ -88,25 +92,41 @@ export default async function SettingsPage() {
                   Access MediShip from your Android phone — book orders, manage leads, check stock, and create purchase orders on the go.
                 </p>
                 <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono text-teal-700">
-                  https://mediship-pwa.vercel.app
-                  <a href="https://mediship-pwa.vercel.app" target="_blank" rel="noopener noreferrer" className="ml-auto text-slate-400 hover:text-teal-600">
+                  {PWA_URL}
+                  <a href={PWA_URL} target="_blank" rel="noopener noreferrer" className="ml-auto text-slate-400 hover:text-teal-600">
                     <ExternalLink className="h-3.5 w-3.5" />
                   </a>
                 </div>
                 <div className="space-y-1.5 text-xs text-slate-500">
-                  <p className="font-medium text-slate-600">How to install on Android:</p>
+                  <p className="font-medium text-slate-600">Option A — Install as PWA (no download):</p>
                   <ol className="list-decimal list-inside space-y-1">
                     <li>Open the URL above in <strong>Chrome</strong> on your Android phone</li>
                     <li>Tap the <strong>⋮ menu → "Add to Home Screen"</strong></li>
-                    <li>Tap <strong>Add</strong> — the MediShip icon appears on your home screen</li>
-                    <li>Open it like a native app — works offline too</li>
+                    <li>Tap <strong>Add</strong> — MediShip icon appears on your home screen</li>
                   </ol>
+                </div>
+                <div className="space-y-1.5 text-xs text-slate-500">
+                  <p className="font-medium text-slate-600">Option B — Install as native APK:</p>
+                  <a
+                    href="https://github.com/mibrahim2007/mediship-pwa/releases/latest/download/app-release-signed.apk"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600 text-white text-xs font-medium hover:bg-teal-700 transition-colors"
+                  >
+                    Download APK
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                  <p className="text-slate-400">Enable "Install from unknown sources" in Android settings first.</p>
                 </div>
               </div>
               <div className="flex flex-col items-center gap-2 flex-shrink-0">
-                <div className="w-28 h-28 bg-white border-2 border-teal-100 rounded-2xl flex items-center justify-center">
-                  <QrCode className="h-20 w-20 text-slate-300" />
-                </div>
+                <a href={PWA_URL} target="_blank" rel="noopener noreferrer">
+                  <img
+                    src={qrDataUrl}
+                    alt="Scan to open MediShip mobile app"
+                    width={120}
+                    height={120}
+                    className="rounded-2xl border-2 border-teal-100 shadow-sm"
+                  />
+                </a>
                 <p className="text-[10px] text-slate-400 text-center">Scan with phone camera<br />to open the app</p>
               </div>
             </div>
