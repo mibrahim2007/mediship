@@ -108,7 +108,7 @@ export default async function SettingsPage() {
                 <div className="space-y-1.5 text-xs text-slate-500">
                   <p className="font-medium text-slate-600">Option B — Install as native APK:</p>
                   <a
-                    href="https://github.com/mibrahim2007/mediship-pwa/releases/latest/download/app-release-signed.apk"
+                    href="https://expo.dev/artifacts/eas/hTV5CZM2D9OE-CoVnhhqzHztWVxhCwVbYFcrRxrtE2o.apk"
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600 text-white text-xs font-medium hover:bg-teal-700 transition-colors"
                   >
                     Download APK
